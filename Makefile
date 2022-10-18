@@ -18,8 +18,7 @@ run: deploy
 stop:
 	ssh $(DEVICE_HOST) 'killall -q -9 $(BIN_NAME) || true; systemctl start xochitl'
 
-build:
-	cargo update
+build: deps
 	cross build --release
 
 deploy: build
@@ -27,6 +26,9 @@ deploy: build
 	scp ./target/$(TARGET)/release/$(BIN_NAME) $(DEVICE_HOST):
 	ssh $(DEVICE_HOST) 'RUST_BACKTRACE=1 RUST_LOG=debug ./$(BIN_NAME)'
 
-test:
+deps:
+	cargo update
+
+test: deps
 # Notice we aren't using the armv7 target here
 	cross test
