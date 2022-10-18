@@ -27,7 +27,6 @@ deploy: build
 	ssh $(DEVICE_HOST) 'RUST_BACKTRACE=1 RUST_LOG=debug ./$(BIN_NAME)'
 
 deps:
-	cargo update
 	cargo install cross
 
 test: deps
