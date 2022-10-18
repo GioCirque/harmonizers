@@ -28,6 +28,7 @@ deploy: build
 
 deps:
 	cargo update
+	cargo install cross
 
 test: deps
 # Notice we aren't using the armv7 target here
