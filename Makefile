@@ -19,6 +19,7 @@ stop:
 	ssh $(DEVICE_HOST) 'killall -q -9 $(BIN_NAME) || true; systemctl start xochitl'
 
 build:
+	cargo update
 	cross build --release
 
 deploy: build
