@@ -1,28 +1,31 @@
-# For non-musl, use: armv7-unknown-linux-gnueabihf
-TARGET ?= armv7-unknown-linux-musleabihf
+.SILENT:
 
+TARGET ?= armv7-unknown-linux-gnueabihf
 DEVICE_IP ?= '10.11.99.1'
 DEVICE_HOST ?= root@$(DEVICE_IP)
+BIN_NAME ?= harmonizers
 
-all: build
-
+all: test build
 .PHONY: all
 
-run: deploy
-	ssh $(DEVICE_HOST) 'killall -q -9 harmony || true; systemctl stop xochitl || true'
-	ssh $(DEVICE_HOST) './harmonizers'
+reboot:
+	ssh $(DEVICE_HOST) '/sbin/reboot || true;'
 
-build: test
-	cargo build --release
+run: deploy
+	ssh $(DEVICE_HOST) 'killall -q -9 $(BIN_NAME) || true; systemctl stop xochitl || true'
+	ssh $(DEVICE_HOST) './$(BIN_NAME)'
+
+stop:
+	ssh $(DEVICE_HOST) 'killall -q -9 $(BIN_NAME) || true; systemctl start xochitl'
+
+build:
+	cross build --release
 
 deploy: build
-	ssh $(DEVICE_HOST) 'killall -q -9 demo || true; systemctl stop xochitl || true'
-	scp ./target/$(TARGET)/release/examples/demo $(DEVICE_HOST):
-	ssh $(DEVICE_HOST) 'RUST_BACKTRACE=1 RUST_LOG=debug ./demo'
+	ssh $(DEVICE_HOST) 'killall -q -9 $(BIN_NAME) || true; systemctl stop xochitl || true'
+	scp ./target/$(TARGET)/release/$(BIN_NAME) $(DEVICE_HOST):
+	ssh $(DEVICE_HOST) 'RUST_BACKTRACE=1 RUST_LOG=debug ./$(BIN_NAME)'
 
 test:
-	# Notice we aren't using the armv7 target here
-	cargo test
-
-start-xochitl:
-	ssh $(DEVICE_HOST) 'killall -q -9 demo || true; systemctl start xochitl'
+# Notice we aren't using the armv7 target here
+	cross test
