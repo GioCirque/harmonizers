@@ -1,3 +1,0 @@
-[build]
-# Set the default --target flag
-target = "armv7-unknown-linux-gnueabihf"

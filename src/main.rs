@@ -16,6 +16,9 @@ fn main() {
     EvDevContext::new(InputDevice::GPIO, input_tx.clone()).start();
     EvDevContext::new(InputDevice::Multitouch, input_tx).start();
 
+    canvas.clear();
+    canvas.update_full();
+
     loop {
         for event in input_rx.try_iter() {
             current_scene.on_input(event);

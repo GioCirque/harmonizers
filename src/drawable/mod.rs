@@ -1,6 +1,10 @@
 mod chrome;
+mod surface;
+mod toolbar;
 
 pub use chrome::AppChrome;
+pub use surface::AppSurface;
+pub use toolbar::AppToolbar;
 
 use crate::canvas::Canvas;
 use downcast_rs::Downcast;
@@ -12,5 +16,8 @@ pub trait Drawable: Downcast {
         None
     }
     fn on_input(&mut self, _event: InputEvent) {}
+    fn is_hit(&mut self, _event: &InputEvent) -> bool {
+        true
+    }
 }
 impl_downcast!(Drawable);
