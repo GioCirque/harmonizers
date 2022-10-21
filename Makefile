@@ -12,8 +12,9 @@ reboot:
 	ssh $(DEVICE_HOST) '/sbin/reboot || true;' &
 
 run:
-	ssh $(DEVICE_HOST) 'killall -q -9 $(BIN_NAME) || true; systemctl stop xochitl || true'
-	ssh $(DEVICE_HOST) './$(BIN_NAME)' &
+	ssh $(DEVICE_HOST) 'killall -q -9 $(BIN_NAME) || true; killall -q -9 xochitl || true; systemctl stop xochitl || true'
+	scp ./target/$(TARGET)/release/$(BIN_NAME) $(DEVICE_HOST):
+	ssh $(DEVICE_HOST) 'RUST_BACKTRACE=1 RUST_LOG=debug ./$(BIN_NAME)'
 
 stop:
 	ssh $(DEVICE_HOST) 'killall -q -9 $(BIN_NAME) || true; systemctl start xochitl' &
@@ -24,7 +25,7 @@ build: deps
 deploy: build
 	ssh $(DEVICE_HOST) 'killall -q -9 $(BIN_NAME) || true; systemctl stop xochitl || true'
 	scp ./target/$(TARGET)/release/$(BIN_NAME) $(DEVICE_HOST):
-	ssh $(DEVICE_HOST) 'RUST_BACKTRACE=1 RUST_LOG=debug ./$(BIN_NAME)' &
+	ssh $(DEVICE_HOST) 'RUST_BACKTRACE=1 RUST_LOG=debug ./$(BIN_NAME)'
 
 deps:
 	cargo install cross

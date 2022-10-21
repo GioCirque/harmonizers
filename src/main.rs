@@ -6,8 +6,9 @@ mod drawable;
 
 use crate::canvas::Canvas;
 use crate::drawable::*;
-
 use libremarkable::input::{ev::EvDevContext, InputDevice, InputEvent};
+use std::thread::sleep;
+use std::time::{Duration, Instant};
 
 fn main() {
     let mut canvas = Canvas::new();
@@ -19,15 +20,26 @@ fn main() {
     canvas.clear();
     canvas.update_full();
 
+    const FPS: u16 = 30;
+    const FRAME_DURATION: Duration = Duration::from_millis(1000 / FPS as u64);
+
     loop {
+        let before_input = Instant::now();
+
+        current_scene.draw(&mut canvas);
         for event in input_rx.try_iter() {
             current_scene.on_input(event);
         }
-        current_scene.draw(&mut canvas);
 
         let next_scene = current_scene.update(&mut canvas);
         if next_scene.is_some() {
             current_scene = next_scene.unwrap();
+        }
+
+        // Wait remaining frame time
+        let elapsed = before_input.elapsed();
+        if elapsed < FRAME_DURATION {
+            sleep(FRAME_DURATION - elapsed);
         }
     }
 }

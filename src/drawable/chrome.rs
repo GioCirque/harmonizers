@@ -29,10 +29,7 @@ impl Drawable for AppChrome {
     }
 
     fn on_input(&mut self, event: InputEvent) {
-        if self.toolbar.is_hit(&event) {
-            self.toolbar.on_input(event);
-        } else if self.surface.is_hit(&event) {
-            self.surface.on_input(event);
-        }
+        self.toolbar.on_input(event.to_owned());
+        self.surface.on_input(event.to_owned());
     }
 }

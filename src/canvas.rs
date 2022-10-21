@@ -1,3 +1,4 @@
+use image::RgbImage;
 pub use libremarkable::framebuffer::{
     cgmath::Point2, cgmath::Vector2, common::color, common::mxcfb_rect, common::DISPLAYHEIGHT,
     common::DISPLAYWIDTH, core::Framebuffer, FramebufferBase, FramebufferDraw, FramebufferIO,
@@ -7,6 +8,8 @@ use libremarkable::framebuffer::{
     common::display_temp, common::dither_mode, common::waveform_mode, PartialRefreshMode,
 };
 use std::{cmp::max, ops::DerefMut};
+
+use crate::drawable::Asset;
 
 pub struct Canvas {
     framebuffer: Box<Framebuffer>,
@@ -61,7 +64,18 @@ impl Canvas {
         );
     }
 
-    pub fn draw_text(&mut self, pos: Point2<Option<i32>>, text: &str, size: f32) -> mxcfb_rect {
+    pub fn draw_image(&mut self, img: &RgbImage, pos: Point2<Option<i32>>) -> mxcfb_rect {
+        let pos = centered_point(pos);
+        return self.framebuffer_mut().draw_image(img, pos);
+    }
+
+    pub fn draw_text(
+        &mut self,
+        pos: Point2<Option<i32>>,
+        text: &str,
+        size: f32,
+        color: Option<color>,
+    ) -> mxcfb_rect {
         let mut pos = pos;
         if pos.x.is_none() || pos.y.is_none() {
             // Do dryrun to get text size
@@ -91,8 +105,9 @@ impl Canvas {
             y: pos.y.unwrap() as f32,
         };
 
+        let clr = color.or(Some(color::BLACK)).unwrap();
         self.framebuffer_mut()
-            .draw_text(pos, &text, size, color::BLACK, false)
+            .draw_text(pos, &text, size, clr, false)
     }
 
     pub fn draw_line(
@@ -123,13 +138,13 @@ impl Canvas {
         }
     }
 
-    pub fn draw_button_round(
+    pub fn draw_button_round_outline(
         &mut self,
         pos: Point2<Option<i32>>,
         text: &str,
         size: f32,
     ) -> mxcfb_rect {
-        let rect = self.draw_text(pos, text, size);
+        let rect = self.draw_text(pos, text, size, None);
         let c_pos = Point2 {
             x: (rect.left + (rect.width / 2)) as i32,
             y: (rect.top + (rect.height / 2)) as i32,
@@ -141,7 +156,26 @@ impl Canvas {
         rect
     }
 
-    pub fn draw_button_rect(
+    pub fn draw_button_round_filled(
+        &mut self,
+        pos: Point2<Option<i32>>,
+        text: &str,
+        size: f32,
+    ) -> mxcfb_rect {
+        let clr = Some(color::WHITE);
+        let rect = self.draw_text(pos, text, size, clr);
+        let c_pos = Point2 {
+            x: (rect.left + (rect.width / 2)) as i32,
+            y: (rect.top + (rect.height / 2)) as i32,
+        };
+        let c_rad = max(rect.height, rect.width);
+        self.framebuffer_mut()
+            .fill_circle(c_pos, c_rad, color::BLACK);
+
+        rect
+    }
+
+    pub fn draw_button_rect_outline(
         &mut self,
         pos: Point2<Option<i32>>,
         text: &str,
@@ -149,7 +183,7 @@ impl Canvas {
         vgap: u32,
         hgap: u32,
     ) -> mxcfb_rect {
-        let text_rect = self.draw_text(pos, text, font_size);
+        let text_rect = self.draw_text(pos, text, font_size, None);
         self.draw_rect(
             Point2 {
                 x: Some((text_rect.left - hgap) as i32),
@@ -161,6 +195,119 @@ impl Canvas {
             },
             5,
         )
+    }
+
+    pub fn draw_drop_down(
+        &mut self,
+        point: Point2<Option<i32>>,
+        options: &Vec<String>,
+        selected: usize,
+        font_size: f32,
+        vgap: u32,
+        hgap: u32,
+        is_open: bool,
+    ) -> mxcfb_rect {
+        let color = Some(color::BLACK);
+        let mut rect = mxcfb_rect::default();
+        let mut pos = Point2 {
+            x: Some(0),
+            y: Some(0),
+        };
+        let mut box_rect = mxcfb_rect::default();
+        let img = Asset::get_icon_down();
+
+        if is_open {
+            let mut it_hgap = hgap.clone() as i32;
+            for text in options {
+                pos = Point2 {
+                    x: Some((point.x.unwrap() + (vgap as i32)) as i32),
+                    y: Some(
+                        ((point.y.unwrap() + pos.y.unwrap() + rect.height as i32) + it_hgap) as i32,
+                    ),
+                };
+                if text == "" || text == "-" {
+                    rect = self.draw_line(
+                        Point2 {
+                            x: pos.x.clone(),
+                            y: Some(pos.y.unwrap() - rect.height as i32),
+                        },
+                        Point2 {
+                            x: Some(
+                                (pos.x.unwrap() + img.width() as i32)
+                                    + hgap as i32
+                                    + box_rect.width as i32,
+                            ),
+                            y: Some(pos.y.unwrap() - rect.height as i32),
+                        },
+                        1,
+                    );
+                    rect.width = box_rect.width;
+                } else {
+                    rect = self.draw_text(pos, text, font_size, color);
+                }
+                box_rect = box_rect.merge_rect(&rect);
+                it_hgap = 0;
+            }
+        } else {
+            let text = &options[selected] as &str;
+            pos = Point2 {
+                x: Some((point.x.unwrap() + (vgap as i32)) as i32),
+                y: Some(
+                    ((point.y.unwrap() + pos.y.unwrap() + rect.height as i32) + (hgap as i32))
+                        as i32,
+                ),
+            };
+            rect = self.draw_text(pos, text, font_size, color);
+            box_rect = box_rect.merge_rect(&rect);
+        }
+
+        let hit_rect = self.draw_rect(
+            Point2 {
+                x: Some((box_rect.left - hgap) as i32),
+                y: Some((box_rect.top - vgap) as i32),
+            },
+            Vector2 {
+                x: hgap + box_rect.width + hgap + img.width() + hgap,
+                y: vgap + box_rect.height + vgap,
+            },
+            3,
+        );
+
+        let img_pos = Point2 {
+            x: Some(((hit_rect.left + hit_rect.width) - (img.width() + hgap)) as i32),
+            y: Some((hit_rect.top + (rect.height / 2) + (vgap / 2)) as i32),
+        };
+        self.draw_image(&img, img_pos);
+
+        hit_rect
+    }
+
+    pub fn draw_button_rect_filled(
+        &mut self,
+        pos: Point2<Option<i32>>,
+        text: &str,
+        size: f32,
+        vgap: u32,
+        hgap: u32,
+    ) -> mxcfb_rect {
+        let clr = Some(color::WHITE);
+        let text_rect = self.draw_text(pos, text, size, clr);
+        let pos = Point2 {
+            x: (text_rect.left - hgap) as i32,
+            y: (text_rect.top - vgap) as i32,
+        };
+        let size = Vector2 {
+            x: hgap + text_rect.width + hgap,
+            y: vgap + text_rect.height + vgap,
+        };
+
+        self.framebuffer_mut().fill_rect(pos, size, color::BLACK);
+        mxcfb_rect {
+            top: pos.y as u32,
+            left: pos.x as u32,
+            width: size.x,
+            height: size.y,
+        }
     }
 
     pub fn is_hitting(pos: Point2<u16>, hitbox: mxcfb_rect) -> bool {

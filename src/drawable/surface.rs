@@ -24,11 +24,11 @@ impl AppSurface {
 }
 
 impl Drawable for AppSurface {
-    fn update(&mut self, canvas: &mut Canvas) -> Option<Box<dyn Drawable>> {
+    fn update(&mut self, _canvas: &mut Canvas) -> Option<Box<dyn Drawable>> {
         None
     }
 
-    fn draw(&mut self, canvas: &mut Canvas) {}
+    fn draw(&mut self, _canvas: &mut Canvas) {}
 
-    fn on_input(&mut self, event: InputEvent) {}
+    fn on_input(&mut self, _event: InputEvent) {}
 }

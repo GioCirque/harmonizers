@@ -1,7 +1,11 @@
+mod assets;
+mod buttons;
 mod chrome;
 mod surface;
 mod toolbar;
 
+pub use assets::Asset;
+pub use buttons::*;
 pub use chrome::AppChrome;
 pub use surface::AppSurface;
 pub use toolbar::AppToolbar;
@@ -16,8 +20,5 @@ pub trait Drawable: Downcast {
         None
     }
     fn on_input(&mut self, _event: InputEvent) {}
-    fn is_hit(&mut self, _event: &InputEvent) -> bool {
-        true
-    }
 }
 impl_downcast!(Drawable);
