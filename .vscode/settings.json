@@ -1,6 +1,8 @@
 {
   "cSpell.words": [
+    "appctx",
     "cgmath",
+    "DISPLAYCENTER",
     "DISPLAYHEIGHT",
     "DISPLAYWIDTH",
     "dryrun",
@@ -13,6 +15,7 @@
     "LONGFUR",
     "Multitouch",
     "mxcfb",
+    "onclick",
     "vgap"
   ]
 }
