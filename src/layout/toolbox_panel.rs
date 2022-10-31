@@ -1,32 +1,38 @@
 use crate::{
-    UIConstraintRefresh, UIElement, UIElementWrapper, APP_BUTTON_GAP_V, APP_BUTTON_SPACE_H,
-    APP_BUTTON_TOP, APP_BUTTON_WIDTH_HALF, DISPLAY_EDGE_RIGHT,
+    UIConstraintRefresh, UIElement, UIElementWrapper, APP_BUTTON_SPACE_V, APP_BUTTON_WIDTH_HALF,
+    DISPLAY_EDGE_RIGHT, DISPLAY_EDGE_TOP,
 };
 use cgmath::Vector2;
-use libremarkable::{appctx, framebuffer::common::color};
+use libremarkable::framebuffer::common::color;
+
+const TOOLBOX_PANEL_WIDTH: u16 = 300;
+const TOOLBOX_PANEL_HEIGHT: u16 = 250;
 
 /// Creates the bordered region for the toolbox.
-pub fn create(_app: &mut appctx::ApplicationContext) -> UIElementWrapper {
-    let width: u32 = 250;
-    let height: u32 = 300;
-    let x = DISPLAY_EDGE_RIGHT - (APP_BUTTON_SPACE_H - APP_BUTTON_WIDTH_HALF) - width as u16;
-    let y = APP_BUTTON_TOP + APP_BUTTON_GAP_V;
-
+pub fn create() -> UIElementWrapper {
     UIElementWrapper {
-        position: cgmath::Point2 {
-            x: x.into(),
-            y: y.into(),
-        },
+        position: get_toolbox_panel_point(),
         refresh: UIConstraintRefresh::Refresh,
         onclick: None,
         inner: UIElement::Region {
-            size: Vector2 {
-                x: width,
-                y: height,
-            },
+            size: get_toolbox_panel_size(),
             border_color: color::BLACK,
             border_px: 2,
         },
         ..Default::default()
+    }
+}
+
+pub fn get_toolbox_panel_size() -> Vector2<u32> {
+    Vector2 {
+        x: TOOLBOX_PANEL_HEIGHT.into(),
+        y: TOOLBOX_PANEL_WIDTH.into(),
+    }
+}
+
+pub fn get_toolbox_panel_point() -> cgmath::Point2<i32> {
+    cgmath::Point2 {
+        x: ((DISPLAY_EDGE_RIGHT - TOOLBOX_PANEL_WIDTH) + APP_BUTTON_WIDTH_HALF).into(),
+        y: (DISPLAY_EDGE_TOP + (APP_BUTTON_SPACE_V / 2) + APP_BUTTON_WIDTH_HALF - 8).into(),
     }
 }

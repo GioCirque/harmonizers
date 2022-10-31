@@ -1,26 +1,38 @@
-use super::ToolboxItem;
+use super::*;
 use libremarkable::{
-    appctx,
-    framebuffer::{
-        common::{display_temp, dither_mode, waveform_mode, DRAWING_QUANT_BIT},
-        FramebufferRefresh, PartialRefreshMode,
-    },
-    ui_extensions::element::UIElementHandle,
+    appctx::ApplicationContext,
+    framebuffer::common::mxcfb_rect,
+    ui_extensions::element::{UIElement, UIElementHandle},
 };
 
 static mut TOOLBOX_OPEN: bool = false;
-static ELEMENTS: [ToolboxItem; 2] = [ToolboxItem::Panel, ToolboxItem::Touch];
+static TOOLBOX_ITEMS: [[ToolboxItem; 4]; 2] = [
+    [
+        ToolboxItem::Orientation,
+        ToolboxItem::Touch,
+        ToolboxItem::Refresh,
+        ToolboxItem::Clear,
+    ],
+    [
+        ToolboxItem::Save,
+        ToolboxItem::Open,
+        ToolboxItem::New,
+        ToolboxItem::Delete,
+    ],
+];
 
 /// Inverts the `state` of the toolbox and calls `on_show` or `on_hide` appropriately.
-pub fn toggle_toolbox(app: &mut appctx::ApplicationContext<'_>, element: UIElementHandle) {
+pub fn toggle_toolbox(app: &mut ApplicationContext<'_>, element: UIElementHandle) {
+    let mut is_open: bool = false;
     unsafe {
-        println!("Toggling toolbox {:?} -> {:?}", TOOLBOX_OPEN, !TOOLBOX_OPEN);
         TOOLBOX_OPEN = !TOOLBOX_OPEN;
-        if TOOLBOX_OPEN {
-            on_show(app, element);
-        } else {
-            on_hide(app, element);
-        }
+        is_open = TOOLBOX_OPEN;
+    }
+
+    if is_open {
+        on_show(app, element);
+    } else {
+        on_hide(app, element);
     }
 }
 
@@ -32,40 +44,43 @@ pub fn is_toolbox_open() -> bool {
 }
 
 /// Handle showing the toolbox.
-fn on_show(app: &mut appctx::ApplicationContext<'_>, _element: UIElementHandle) {
-    // add everything except the kebab
-    println!("Showing {:?} toolbox items.", ELEMENTS.len());
+fn on_show(app: &mut ApplicationContext<'_>, _element: UIElementHandle) {
+    let mut col: u16 = 0;
+    let mut row: u16 = 0;
     let root = app.upgrade_ref();
-    for e in ELEMENTS.iter() {
-        root.add_element(&e.name(), e.create(app));
+
+    // Add the toolbox and it's items
+    root.add_element(
+        &ToolboxItem::Panel.name(),
+        ToolboxItem::Panel.create(app.upgrade_ref(), 0, 0),
+    );
+    /* root.add_element(
+        &AppElement::KebabOpen.name(),
+        AppElement::KebabOpen.create(app.upgrade_ref()),
+    ); */
+    for set in TOOLBOX_ITEMS.iter() {
+        for item in set.iter() {
+            let element = item.create(app.upgrade_ref(), col, row);
+            app.add_element(&item.name(), element);
+            col += 1;
+        }
+        col = 0;
+        row += 1;
     }
-    app.draw_elements();
+    root.draw_elements();
 }
 
 /// Handle hiding the toolbox.
-fn on_hide(app: &mut appctx::ApplicationContext<'_>, _element: UIElementHandle) {
-    // remove everything except the kebab
-    println!("Hiding {:?} toolbox items.", ELEMENTS.len());
-    for e in ELEMENTS.iter().rev() {
-        let rect = e
-            .find(app.upgrade_ref())
-            .unwrap()
-            .read()
-            .last_drawn_rect
-            .unwrap();
-        println!(
-            "Refreshing area {{ left:{}, top:{}, width:{}, height:{} }}.",
-            rect.left, rect.top, rect.width, rect.height
-        );
-        app.remove_element(&e.name());
-        app.get_framebuffer_ref().partial_refresh(
-            &rect,
-            PartialRefreshMode::Async,
-            waveform_mode::WAVEFORM_MODE_GC16_FAST,
-            display_temp::TEMP_USE_REMARKABLE_DRAW,
-            dither_mode::EPDC_FLAG_USE_REMARKABLE_DITHER,
-            DRAWING_QUANT_BIT,
-            true,
-        );
+fn on_hide(app: &mut ApplicationContext<'_>, _element: UIElementHandle) {
+    // Remove the toolbox and it's items
+    //AppElement::KebabOpen.remove(app.upgrade_ref());
+    let root = app.upgrade_ref();
+    let region: mxcfb_rect = ToolboxItem::Panel.remove(app.upgrade_ref());
+    for set in TOOLBOX_ITEMS.iter().rev() {
+        for item in set.iter().rev() {
+            region.merge_rect(&item.remove(app));
+        }
     }
+    clear_region(app, &region);
+    root.draw_elements();
 }

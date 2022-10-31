@@ -4,7 +4,14 @@ use super::*;
 #[derive(Debug, Clone, Copy)]
 pub enum ToolboxItem {
     Panel,
+    Clear,
+    Orientation,
+    Refresh,
     Touch,
+    New,
+    Open,
+    Save,
+    Delete,
 }
 
 impl ToolboxItem {
@@ -15,14 +22,43 @@ impl ToolboxItem {
 
     /// Maybe finds the element, by name, in the `app`.
     pub fn find(self, app: &mut appctx::ApplicationContext) -> Option<UIElementHandle> {
-        app.get_element_by_name(&ToolboxItem::name(self))
+        app.get_element_by_name(&self.name())
+    }
+
+    pub fn remove(self, app: &mut appctx::ApplicationContext) -> mxcfb_rect {
+        let item = self.find(app);
+        if item.is_none() {
+            return mxcfb_rect::default();
+        }
+
+        let rect = item.unwrap().read().last_drawn_rect.unwrap();
+        app.remove_element(&self.name());
+
+        return rect;
     }
 
     /// Create the associated `UIElementWrapper` for an element.
-    pub fn create(self, app: &mut appctx::ApplicationContext) -> UIElementWrapper {
+    pub fn create(
+        self,
+        app: &mut appctx::ApplicationContext,
+        col: u16,
+        row: u16,
+    ) -> UIElementWrapper {
         match self {
-            ToolboxItem::Panel => toolbox_panel::create(app),
-            ToolboxItem::Touch => touch::create(app),
+            // The containing panel rectangle
+            ToolboxItem::Panel => toolbox_panel::create(),
+
+            // First row of buttons
+            ToolboxItem::Orientation => toolbox_buttons::create_orientation_cycler(col, row),
+            ToolboxItem::Touch => toolbox_buttons::create_touch_toggle(app.upgrade_ref(), col, row),
+            ToolboxItem::Refresh => toolbox_buttons::create_refresh_button(col, row),
+            ToolboxItem::Clear => toolbox_buttons::create_clear_button(col, row),
+
+            // Second row of buttons
+            ToolboxItem::Save => toolbox_buttons::create_save_button(col, row),
+            ToolboxItem::Open => toolbox_buttons::create_open_button(col, row),
+            ToolboxItem::New => toolbox_buttons::create_new_button(col, row),
+            ToolboxItem::Delete => toolbox_buttons::create_delete_button(col, row),
         }
     }
 }
