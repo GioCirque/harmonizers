@@ -15,6 +15,11 @@ pub enum ToolboxItem {
     Delete,
     Undo,
     Redo,
+    BrushType,
+    BrushSize,
+    BrushColor,
+    BrushShape,
+    Layers,
 }
 
 impl ToolboxItem {
@@ -65,6 +70,28 @@ impl ToolboxItem {
             ToolboxItem::Open => toolbox_buttons::create_open_button(col, row),
             ToolboxItem::New => toolbox_buttons::create_new_button(col, row),
             ToolboxItem::Delete => toolbox_buttons::create_delete_button(col, row),
+
+            // Everything else
+            _ => panic!("The item {} cannot be created this way. Perhaps calling create_compound(...) would work.", self.name())
+        }
+    }
+
+    /// Create the associated `Vec<UIElementWrapper>` for a compound element.
+    pub fn create_compound(
+        self,
+        app: &mut appctx::ApplicationContext,
+        row: u16,
+    ) -> Vec<UIElementWrapper> {
+        match self {
+            // The dropdown-ish menus
+            ToolboxItem::BrushType => toolbox_dropdowns::create_brush_type_dropdown(row),
+            ToolboxItem::BrushSize => toolbox_dropdowns::create_brush_size_dropdown(row),
+            ToolboxItem::BrushColor => toolbox_dropdowns::create_brush_color_dropdown(row),
+            ToolboxItem::BrushShape => toolbox_dropdowns::create_brush_shape_dropdown(row),
+            ToolboxItem::Layers => toolbox_dropdowns::create_layers_dropdown(row),
+
+            // Everything else
+            _ => panic!("The item {} cannot be created this way. Perhaps calling create_compound(...) would work.", self.name())
         }
     }
 }

@@ -1,11 +1,8 @@
-use super::{toolbox_panel::get_toolbox_panel_region, *};
-use libremarkable::{
-    appctx::ApplicationContext, framebuffer::common::mxcfb_rect,
-    ui_extensions::element::UIElementHandle,
-};
+use super::{toolbox_dropdown::DROPDOWN_ELEMENT_COUNT, toolbox_panel::get_toolbox_panel_region, *};
+use libremarkable::{appctx::ApplicationContext, framebuffer::common::mxcfb_rect};
 
 static TOOLBOX_OPEN: Lazy<AtomicBool> = Lazy::new(|| AtomicBool::new(false));
-static TOOLBOX_ITEMS: [[ToolboxItem; 5]; 2] = [
+static TOOLBOX_BUTTONS: [[ToolboxItem; 5]; 2] = [
     [
         ToolboxItem::Undo,
         ToolboxItem::Orientation,
@@ -21,14 +18,21 @@ static TOOLBOX_ITEMS: [[ToolboxItem; 5]; 2] = [
         ToolboxItem::Delete,
     ],
 ];
+static TOOLBOX_DROPDOWNS: [ToolboxItem; 5] = [
+    ToolboxItem::BrushType,
+    ToolboxItem::BrushSize,
+    ToolboxItem::BrushColor,
+    ToolboxItem::BrushShape,
+    ToolboxItem::Layers,
+];
 
 /// Inverts the `state` of the toolbox and calls `on_show` or `on_hide` appropriately.
-pub fn toggle_toolbox(app: &mut ApplicationContext<'_>, element: UIElementHandle) {
-    let is_open = TOOLBOX_OPEN.swap(!TOOLBOX_OPEN.load(Ordering::Relaxed), Ordering::Relaxed);
+pub fn toggle_toolbox(app: &mut ApplicationContext<'_>) {
+    let is_open = !TOOLBOX_OPEN.swap(!TOOLBOX_OPEN.load(Ordering::Relaxed), Ordering::Relaxed);
     if is_open {
-        on_show(app, element);
+        on_show(app);
     } else {
-        on_hide(app, element);
+        on_hide(app);
     }
 }
 
@@ -38,7 +42,7 @@ pub fn is_toolbox_open() -> bool {
 }
 
 /// Handle showing the toolbox.
-fn on_show(app: &mut ApplicationContext<'_>, _element: UIElementHandle) {
+fn on_show(app: &mut ApplicationContext<'_>) {
     let mut col: u16 = 0;
     let mut row: u16 = 0;
     let root = app.upgrade_ref();
@@ -53,7 +57,7 @@ fn on_show(app: &mut ApplicationContext<'_>, _element: UIElementHandle) {
         ToolboxItem::Logo.create(app, 0, 0),
     );
 
-    for set in TOOLBOX_ITEMS.iter() {
+    for set in TOOLBOX_BUTTONS.iter() {
         for item in set.iter() {
             let element = item.create(app.upgrade_ref(), col, row);
             app.add_element(&item.name(), element);
@@ -62,18 +66,37 @@ fn on_show(app: &mut ApplicationContext<'_>, _element: UIElementHandle) {
         col = 0;
         row += 1;
     }
+
+    col = 0;
+    row = 0;
+    for dropdown in TOOLBOX_DROPDOWNS.iter() {
+        let name = dropdown.name();
+        let elements = dropdown.create_compound(app.upgrade_ref(), row);
+        for element in elements.iter() {
+            app.add_element(&format!("{}_{}", name, col), element.to_owned());
+            col += 1;
+        }
+        row += 1;
+    }
+
     let region = get_toolbox_panel_region();
     clear_region(app, &region);
 }
 
 /// Handle hiding the toolbox.
-fn on_hide(app: &mut ApplicationContext<'_>, _element: UIElementHandle) {
+fn on_hide(app: &mut ApplicationContext<'_>) {
     // Remove the toolbox and it's items
-    let mut region: mxcfb_rect = ToolboxItem::Panel.remove(app.upgrade_ref());
-    region = region.merge_rect(&ToolboxItem::Logo.remove(app));
-    for set in TOOLBOX_ITEMS.iter().rev() {
+    let region: mxcfb_rect = ToolboxItem::Panel.remove(app.upgrade_ref());
+    ToolboxItem::Logo.remove(app);
+    for set in TOOLBOX_BUTTONS.iter().rev() {
         for item in set.iter().rev() {
-            region = region.merge_rect(&item.remove(app));
+            item.remove(app);
+        }
+    }
+    for dropdown in TOOLBOX_DROPDOWNS.iter() {
+        let name = dropdown.name();
+        for i in 0..DROPDOWN_ELEMENT_COUNT {
+            app.remove_element(&format!("{}_{}", name, i));
         }
     }
     clear_region(app, &region);

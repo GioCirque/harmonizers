@@ -1,8 +1,5 @@
-use super::toolbox_items::ToolboxItem;
-use crate::{
-    UIConstraintRefresh, UIElement, UIElementHandle, UIElementWrapper, APP_BUTTON_GAP_V,
-    APP_BUTTON_SPACE_H, APP_BUTTON_SPACE_V, APP_BUTTON_TOP, DISPLAY_EDGE_RIGHT,
-};
+use super::{toolbox_button::create_toolbox_button, toolbox_items::ToolboxItem};
+use crate::{UIElement, UIElementHandle, UIElementWrapper};
 use libremarkable::{
     appctx::ApplicationContext,
     framebuffer::{
@@ -13,35 +10,19 @@ use libremarkable::{
     input::InputDevice,
 };
 
-fn create_button(
-    inner: UIElement,
-    onclick: Option<fn(&mut ApplicationContext, UIElementHandle)>,
-    col: u16,
-    row: u16,
-) -> UIElementWrapper {
-    let x = DISPLAY_EDGE_RIGHT - (APP_BUTTON_SPACE_H * col) - 65;
-    let y = APP_BUTTON_TOP + (APP_BUTTON_SPACE_V * row) + APP_BUTTON_GAP_V;
-    UIElementWrapper {
-        position: cgmath::Point2 {
-            x: x.into(),
-            y: y.into(),
-        },
-        refresh: UIConstraintRefresh::RefreshAndWait,
-        onclick,
-        inner,
-        ..Default::default()
-    }
-}
-
 /**
  * Toolbox Undo Button
  */
 
 pub fn create_undo_button(col: u16, row: u16) -> UIElementWrapper {
-    let img = image::load_from_memory(include_bytes!("../../assets/dist/undo.png")).unwrap();
-    let inner = UIElement::Image { img };
-
-    create_button(inner, None, col, row)
+    create_toolbox_button(
+        UIElement::Image {
+            img: image::load_from_memory(include_bytes!("../../assets/dist/undo.png")).unwrap(),
+        },
+        None,
+        col,
+        row,
+    )
 }
 
 /**
@@ -49,10 +30,14 @@ pub fn create_undo_button(col: u16, row: u16) -> UIElementWrapper {
  */
 
 pub fn create_redo_button(col: u16, row: u16) -> UIElementWrapper {
-    let img = image::load_from_memory(include_bytes!("../../assets/dist/redo.png")).unwrap();
-    let inner = UIElement::Image { img };
-
-    create_button(inner, None, col, row)
+    create_toolbox_button(
+        UIElement::Image {
+            img: image::load_from_memory(include_bytes!("../../assets/dist/redo.png")).unwrap(),
+        },
+        None,
+        col,
+        row,
+    )
 }
 
 /**
@@ -60,10 +45,14 @@ pub fn create_redo_button(col: u16, row: u16) -> UIElementWrapper {
  */
 
 pub fn create_delete_button(col: u16, row: u16) -> UIElementWrapper {
-    let img = image::load_from_memory(include_bytes!("../../assets/dist/delete.png")).unwrap();
-    let inner = UIElement::Image { img };
-
-    create_button(inner, None, col, row)
+    create_toolbox_button(
+        UIElement::Image {
+            img: image::load_from_memory(include_bytes!("../../assets/dist/delete.png")).unwrap(),
+        },
+        None,
+        col,
+        row,
+    )
 }
 
 /**
@@ -71,10 +60,14 @@ pub fn create_delete_button(col: u16, row: u16) -> UIElementWrapper {
  */
 
 pub fn create_new_button(col: u16, row: u16) -> UIElementWrapper {
-    let img = image::load_from_memory(include_bytes!("../../assets/dist/new.png")).unwrap();
-    let inner = UIElement::Image { img };
-
-    return create_button(inner, None, col, row);
+    create_toolbox_button(
+        UIElement::Image {
+            img: image::load_from_memory(include_bytes!("../../assets/dist/new.png")).unwrap(),
+        },
+        None,
+        col,
+        row,
+    )
 }
 
 /**
@@ -82,10 +75,14 @@ pub fn create_new_button(col: u16, row: u16) -> UIElementWrapper {
  */
 
 pub fn create_open_button(col: u16, row: u16) -> UIElementWrapper {
-    let img = image::load_from_memory(include_bytes!("../../assets/dist/open.png")).unwrap();
-    let inner = UIElement::Image { img };
-
-    return create_button(inner, None, col, row);
+    create_toolbox_button(
+        UIElement::Image {
+            img: image::load_from_memory(include_bytes!("../../assets/dist/open.png")).unwrap(),
+        },
+        None,
+        col,
+        row,
+    )
 }
 
 /**
@@ -93,10 +90,14 @@ pub fn create_open_button(col: u16, row: u16) -> UIElementWrapper {
  */
 
 pub fn create_save_button(col: u16, row: u16) -> UIElementWrapper {
-    let img = image::load_from_memory(include_bytes!("../../assets/dist/save.png")).unwrap();
-    let inner = UIElement::Image { img };
-
-    return create_button(inner, None, col, row);
+    create_toolbox_button(
+        UIElement::Image {
+            img: image::load_from_memory(include_bytes!("../../assets/dist/save.png")).unwrap(),
+        },
+        None,
+        col,
+        row,
+    )
 }
 
 /**
@@ -104,10 +105,14 @@ pub fn create_save_button(col: u16, row: u16) -> UIElementWrapper {
  */
 
 pub fn create_clear_button(col: u16, row: u16) -> UIElementWrapper {
-    let img = image::load_from_memory(include_bytes!("../../assets/dist/clear.png")).unwrap();
-    let inner = UIElement::Image { img };
-
-    return create_button(inner, None, col, row);
+    create_toolbox_button(
+        UIElement::Image {
+            img: image::load_from_memory(include_bytes!("../../assets/dist/clear.png")).unwrap(),
+        },
+        None,
+        col,
+        row,
+    )
 }
 
 /**
@@ -115,10 +120,14 @@ pub fn create_clear_button(col: u16, row: u16) -> UIElementWrapper {
  */
 
 pub fn create_refresh_button(col: u16, row: u16) -> UIElementWrapper {
-    let img = image::load_from_memory(include_bytes!("../../assets/dist/refresh.png")).unwrap();
-    let inner = UIElement::Image { img };
-
-    return create_button(inner, Some(on_refresh_tapped), col, row);
+    create_toolbox_button(
+        UIElement::Image {
+            img: image::load_from_memory(include_bytes!("../../assets/dist/refresh.png")).unwrap(),
+        },
+        Some(on_refresh_tapped),
+        col,
+        row,
+    )
 }
 
 fn on_refresh_tapped(app: &mut ApplicationContext<'_>, _element: UIElementHandle) {
@@ -136,10 +145,15 @@ fn on_refresh_tapped(app: &mut ApplicationContext<'_>, _element: UIElementHandle
  */
 
 pub fn create_orientation_cycler(col: u16, row: u16) -> UIElementWrapper {
-    let img = image::load_from_memory(include_bytes!("../../assets/dist/orientation.png")).unwrap();
-    let inner = UIElement::Image { img };
-
-    return create_button(inner, None, col, row);
+    create_toolbox_button(
+        UIElement::Image {
+            img: image::load_from_memory(include_bytes!("../../assets/dist/orientation.png"))
+                .unwrap(),
+        },
+        None,
+        col,
+        row,
+    )
 }
 
 /**
@@ -151,10 +165,14 @@ pub fn create_touch_toggle(
     col: u16,
     row: u16,
 ) -> UIElementWrapper {
-    let img = get_touch_image(app.upgrade_ref());
-    let inner = UIElement::Image { img };
-
-    return create_button(inner, Some(on_touch_toggle), col, row);
+    create_toolbox_button(
+        UIElement::Image {
+            img: get_touch_image(app.upgrade_ref()),
+        },
+        Some(on_touch_toggle),
+        col,
+        row,
+    )
 }
 
 fn get_touch_image(app: &mut ApplicationContext<'_>) -> image::DynamicImage {

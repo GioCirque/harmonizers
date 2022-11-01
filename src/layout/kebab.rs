@@ -20,7 +20,7 @@ pub fn create(_app: &mut ApplicationContext) -> UIElementWrapper {
             y: KEBAB_Y.into(),
         },
         refresh: UIConstraintRefresh::Refresh,
-        onclick: Some(toggle_toolbox),
+        onclick: Some(|a, _| toggle_toolbox(a)),
         inner: UIElement::Image {
             img: get_kebab_image(is_toolbox_open()),
         },

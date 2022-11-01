@@ -28,10 +28,10 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 
 const APP_BUTTON_TOP: u16 = 68;
+const APP_DROPDOWN_TOP: u16 = 180;
 const APP_BUTTON_GAP_H: u16 = 10;
 const APP_BUTTON_GAP_V: u16 = 10;
 const APP_BUTTON_WIDTH: u16 = 32;
-const APP_BUTTON_WIDTH_HALF: u16 = APP_BUTTON_WIDTH / 2;
 const APP_BUTTON_SPACE_H: u16 = APP_BUTTON_WIDTH + (APP_BUTTON_GAP_H * 2);
 const APP_BUTTON_SPACE_V: u16 = APP_BUTTON_WIDTH + (APP_BUTTON_GAP_V * 2);
 const DISPLAY_EDGE_TOP: u16 = 0;
@@ -44,30 +44,6 @@ static WACOM_IN_RANGE: Lazy<AtomicBool> = Lazy::new(|| AtomicBool::new(false));
 static WACOM_RUBBER_SIDE: Lazy<AtomicBool> = Lazy::new(|| AtomicBool::new(false));
 static WACOM_HISTORY: Lazy<Mutex<VecDeque<(cgmath::Point2<f32>, i32)>>> =
     Lazy::new(|| Mutex::new(VecDeque::new()));
-
-fn change_brush_width(app: &mut appctx::ApplicationContext<'_>, delta: i32) {
-    let current = G_DRAW_MODE.load(Ordering::Relaxed);
-    let current_size = current.get_size() as i32;
-    let proposed_size = current_size + delta;
-    let new_size = if proposed_size < 1 {
-        1
-    } else if proposed_size > 99 {
-        99
-    } else {
-        proposed_size
-    };
-    if new_size == current_size {
-        return;
-    }
-
-    G_DRAW_MODE.store(current.set_size(new_size as u32), Ordering::Relaxed);
-
-    let element = app.get_element_by_name("displaySize").unwrap();
-    if let UIElement::Text { ref mut text, .. } = element.write().inner {
-        *text = format!("size: {0}", new_size);
-    }
-    app.draw_element("displaySize");
-}
 
 // ####################
 // ## Input Handlers

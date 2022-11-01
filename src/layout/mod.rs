@@ -2,12 +2,15 @@ mod canvas;
 mod kebab;
 mod logo;
 mod toolbox;
+mod toolbox_button;
 mod toolbox_buttons;
+mod toolbox_dropdown;
+mod toolbox_dropdowns;
 mod toolbox_items;
 mod toolbox_panel;
 
 pub use canvas::{event_handlers as canvas_handlers, CANVAS_REGION};
-use cgmath::{Point2, Vector2};
+pub use cgmath::{Point2, Vector2};
 pub use kebab::get_kebab_region;
 pub use toolbox::{is_toolbox_open, toggle_toolbox};
 pub use toolbox_items::ToolboxItem;
@@ -25,17 +28,6 @@ enum AppElement {
 impl AppElement {
     fn name(self) -> String {
         self.to_string()
-    }
-
-    fn find(self, app: &mut ApplicationContext) -> Option<UIElementHandle> {
-        app.get_element_by_name(&AppElement::name(self))
-    }
-
-    fn remove(self, app: &mut ApplicationContext) -> mxcfb_rect {
-        let rect = self.find(app).unwrap().read().last_drawn_rect.unwrap();
-        app.remove_element(&self.name());
-
-        return rect;
     }
 
     fn create(self, app: &mut ApplicationContext) -> UIElementWrapper {
@@ -79,8 +71,8 @@ pub fn clear_region(app: &mut ApplicationContext, region: &mxcfb_rect) {
     );
     fb.partial_refresh(
         &final_region,
-        PartialRefreshMode::Wait,
-        waveform_mode::WAVEFORM_MODE_AUTO,
+        PartialRefreshMode::Async,
+        waveform_mode::WAVEFORM_MODE_INIT,
         display_temp::TEMP_USE_REMARKABLE_DRAW,
         dither_mode::EPDC_FLAG_EXP1,
         DRAWING_QUANT_BIT,
