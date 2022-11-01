@@ -19,7 +19,7 @@ fn create_button(
     col: u16,
     row: u16,
 ) -> UIElementWrapper {
-    let x = DISPLAY_EDGE_RIGHT - (APP_BUTTON_SPACE_H * col) - 100;
+    let x = DISPLAY_EDGE_RIGHT - (APP_BUTTON_SPACE_H * col) - 65;
     let y = APP_BUTTON_TOP + (APP_BUTTON_SPACE_V * row) + APP_BUTTON_GAP_V;
     UIElementWrapper {
         position: cgmath::Point2 {
@@ -31,6 +31,28 @@ fn create_button(
         inner,
         ..Default::default()
     }
+}
+
+/**
+ * Toolbox Undo Button
+ */
+
+pub fn create_undo_button(col: u16, row: u16) -> UIElementWrapper {
+    let img = image::load_from_memory(include_bytes!("../../assets/dist/undo.png")).unwrap();
+    let inner = UIElement::Image { img };
+
+    create_button(inner, None, col, row)
+}
+
+/**
+ * Toolbox Redo Button
+ */
+
+pub fn create_redo_button(col: u16, row: u16) -> UIElementWrapper {
+    let img = image::load_from_memory(include_bytes!("../../assets/dist/redo.png")).unwrap();
+    let inner = UIElement::Image { img };
+
+    create_button(inner, None, col, row)
 }
 
 /**

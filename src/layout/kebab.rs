@@ -5,17 +5,19 @@ use crate::{
 };
 use libremarkable::{
     appctx::ApplicationContext,
+    framebuffer::common::mxcfb_rect,
     image::{load_from_memory, DynamicImage},
 };
 
+const KEBAB_X: u16 = DISPLAY_EDGE_RIGHT - APP_BUTTON_SPACE_H;
+const KEBAB_Y: u16 = DISPLAY_EDGE_TOP + (APP_BUTTON_SPACE_V / 2) - 8;
+
 /// Creates the kebab element.
 pub fn create(_app: &mut ApplicationContext) -> UIElementWrapper {
-    let x = DISPLAY_EDGE_RIGHT - APP_BUTTON_SPACE_H;
-    let y = DISPLAY_EDGE_TOP + (APP_BUTTON_SPACE_V / 2) - 8;
     UIElementWrapper {
         position: cgmath::Point2 {
-            x: x.into(),
-            y: y.into(),
+            x: KEBAB_X.into(),
+            y: KEBAB_Y.into(),
         },
         refresh: UIConstraintRefresh::Refresh,
         onclick: Some(toggle_toolbox),
@@ -23,6 +25,15 @@ pub fn create(_app: &mut ApplicationContext) -> UIElementWrapper {
             img: get_kebab_image(is_toolbox_open()),
         },
         ..Default::default()
+    }
+}
+
+pub fn get_kebab_region() -> mxcfb_rect {
+    mxcfb_rect {
+        top: KEBAB_Y.into(),
+        left: KEBAB_X.into(),
+        height: 32,
+        width: 32,
     }
 }
 

@@ -4,6 +4,7 @@ use super::*;
 #[derive(Debug, Clone, Copy)]
 pub enum ToolboxItem {
     Panel,
+    Logo,
     Clear,
     Orientation,
     Refresh,
@@ -12,6 +13,8 @@ pub enum ToolboxItem {
     Open,
     Save,
     Delete,
+    Undo,
+    Redo,
 }
 
 impl ToolboxItem {
@@ -47,14 +50,17 @@ impl ToolboxItem {
         match self {
             // The containing panel rectangle
             ToolboxItem::Panel => toolbox_panel::create(),
+            ToolboxItem::Logo => logo::create(app),
 
             // First row of buttons
+            ToolboxItem::Undo => toolbox_buttons::create_undo_button(col, row),
             ToolboxItem::Orientation => toolbox_buttons::create_orientation_cycler(col, row),
             ToolboxItem::Touch => toolbox_buttons::create_touch_toggle(app.upgrade_ref(), col, row),
             ToolboxItem::Refresh => toolbox_buttons::create_refresh_button(col, row),
             ToolboxItem::Clear => toolbox_buttons::create_clear_button(col, row),
 
             // Second row of buttons
+            ToolboxItem::Redo => toolbox_buttons::create_redo_button(col, row),
             ToolboxItem::Save => toolbox_buttons::create_save_button(col, row),
             ToolboxItem::Open => toolbox_buttons::create_open_button(col, row),
             ToolboxItem::New => toolbox_buttons::create_new_button(col, row),

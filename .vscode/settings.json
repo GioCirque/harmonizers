@@ -3,6 +3,7 @@
     "appctx",
     "bezier",
     "cgmath",
+    "Deque",
     "DISPLAYCENTER",
     "DISPLAYHEIGHT",
     "DISPLAYWIDTH",
@@ -17,6 +18,7 @@
     "Multitouch",
     "mxcfb",
     "onclick",
+    "UNPRESS",
     "vgap"
   ]
 }

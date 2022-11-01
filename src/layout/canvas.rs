@@ -1,14 +1,16 @@
-use crate::{UIConstraintRefresh, UIElement, UIElementWrapper};
+use crate::{
+    draw_mode::DrawMode, touch_mode::TouchMode, UIConstraintRefresh, UIElement, UIElementWrapper,
+};
 use libremarkable::{appctx, framebuffer::common::*};
 
 // This region will have the following size at rest:
 //   raw: 5896 kB
 //   zstd: 10 kB
 pub const CANVAS_REGION: mxcfb_rect = mxcfb_rect {
-    top: 720,
+    top: 0,
     left: 0,
-    height: 1080,
-    width: 1404,
+    height: DISPLAYHEIGHT as u32,
+    width: DISPLAYWIDTH as u32,
 };
 
 pub fn create(_app: &mut appctx::ApplicationContext) -> UIElementWrapper {
