@@ -4,7 +4,7 @@ use libremarkable::{
     ui_extensions::element::UIElementHandle,
 };
 
-static mut TOOLBOX_OPEN: bool = false;
+static TOOLBOX_OPEN: Lazy<AtomicBool> = Lazy::new(|| AtomicBool::new(false));
 static TOOLBOX_ITEMS: [[ToolboxItem; 5]; 2] = [
     [
         ToolboxItem::Undo,
@@ -24,12 +24,7 @@ static TOOLBOX_ITEMS: [[ToolboxItem; 5]; 2] = [
 
 /// Inverts the `state` of the toolbox and calls `on_show` or `on_hide` appropriately.
 pub fn toggle_toolbox(app: &mut ApplicationContext<'_>, element: UIElementHandle) {
-    let mut is_open: bool = false;
-    unsafe {
-        TOOLBOX_OPEN = !TOOLBOX_OPEN;
-        is_open = TOOLBOX_OPEN;
-    }
-
+    let is_open = TOOLBOX_OPEN.swap(!TOOLBOX_OPEN.load(Ordering::Relaxed), Ordering::Relaxed);
     if is_open {
         on_show(app, element);
     } else {
@@ -39,9 +34,7 @@ pub fn toggle_toolbox(app: &mut ApplicationContext<'_>, element: UIElementHandle
 
 /// Returns a `bool` indicating if the toolbox is open or not.
 pub fn is_toolbox_open() -> bool {
-    unsafe {
-        return TOOLBOX_OPEN;
-    }
+    TOOLBOX_OPEN.load(Ordering::Relaxed)
 }
 
 /// Handle showing the toolbox.
