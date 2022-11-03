@@ -1,10 +1,10 @@
 .SILENT:
 
-TARGET ?= armv7-unknown-linux-gnueabihf
-DEVICE_IP ?= rm2
-DEVICE_HOST ?= root@$(DEVICE_IP)
-BIN_NAME ?= harmonizers
-CROSS_PATH ?= $(shell command -v cross)
+TARGET			?= armv7-unknown-linux-gnueabihf
+DEVICE_IP		?= rm2
+DEVICE_HOST	?= root@$(DEVICE_IP)
+BIN_NAME		?= harmonizers
+CROSS_PATH	?= $(shell command -v cross)
 
 all: test build
 .PHONY: all
