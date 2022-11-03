@@ -2,7 +2,9 @@ mod draw_mode;
 mod layout;
 mod touch_mode;
 
-use crate::layout::{get_kebab_region, is_toolbox_open, CANVAS_REGION};
+use crate::layout::{
+    canvas_handlers::handle_draw_event, get_kebab_region, is_toolbox_open, CANVAS_REGION,
+};
 use draw_mode::DrawMode;
 use libremarkable::{
     appctx,
@@ -54,79 +56,9 @@ fn on_wacom_input(app: &mut appctx::ApplicationContext<'_>, input: input::WacomE
         input::WacomEvent::Draw {
             position,
             pressure,
-            tilt: _,
+            tilt,
         } => {
-            let mut wacom_stack = WACOM_HISTORY.lock().unwrap();
-
-            // This is so that we can click the buttons outside the canvas region
-            // normally meant to be touched with a finger using our stylus
-            if !CANVAS_REGION.contains_point(&position.cast().unwrap())
-                || is_toolbox_open()
-                || get_kebab_region().contains_point(&position.cast().unwrap())
-            {
-                wacom_stack.clear();
-                if UNPRESS_OBSERVED.fetch_and(false, Ordering::Relaxed) {
-                    let region = app
-                        .find_active_region(position.y.round() as u16, position.x.round() as u16);
-                    let element = region.map(|(region, _)| region.element.clone());
-                    if let Some(element) = element {
-                        (region.unwrap().0.handler)(app, element)
-                    }
-                }
-                return;
-            }
-
-            let (mut col, mut mult) = match G_DRAW_MODE.load(Ordering::Relaxed) {
-                DrawMode::Draw(s) => (color::BLACK, s),
-                DrawMode::Erase(s) => (color::WHITE, s * 3),
-            };
-            if WACOM_RUBBER_SIDE.load(Ordering::Relaxed) {
-                col = match col {
-                    color::WHITE => color::BLACK,
-                    _ => color::WHITE,
-                };
-                mult = 50; // Rough size of the rubber end
-            }
-
-            wacom_stack.push_back((position.cast().unwrap(), pressure as i32));
-
-            while wacom_stack.len() >= 3 {
-                let framebuffer = app.get_framebuffer_ref();
-                let points = vec![
-                    wacom_stack.pop_front().unwrap(),
-                    *wacom_stack.get(0).unwrap(),
-                    *wacom_stack.get(1).unwrap(),
-                ];
-                let radii: Vec<f32> = points
-                    .iter()
-                    .map(|point| ((mult as f32 * (point.1 as f32) / 2048.) / 2.0))
-                    .collect();
-                // calculate control points
-                let start_point = points[2].0.midpoint(points[1].0);
-                let ctrl_point = points[1].0;
-                let end_point = points[1].0.midpoint(points[0].0);
-                // calculate diameters
-                let start_width = radii[2] + radii[1];
-                let ctrl_width = radii[1] * 2.0;
-                let end_width = radii[1] + radii[0];
-                let rect = framebuffer.draw_dynamic_bezier(
-                    (start_point, start_width),
-                    (ctrl_point, ctrl_width),
-                    (end_point, end_width),
-                    10,
-                    col,
-                );
-
-                framebuffer.partial_refresh(
-                    &rect,
-                    PartialRefreshMode::Async,
-                    waveform_mode::WAVEFORM_MODE_DU,
-                    display_temp::TEMP_USE_REMARKABLE_DRAW,
-                    dither_mode::EPDC_FLAG_EXP1,
-                    DRAWING_QUANT_BIT,
-                    false,
-                );
-            }
+            handle_draw_event(app.upgrade_ref(), position, pressure, tilt);
         }
         input::WacomEvent::InstrumentChange { pen, state } => {
             match pen {

@@ -67,26 +67,26 @@ fn on_show(app: &mut ApplicationContext<'_>) {
         row += 1;
     }
 
-    col = 0;
     row = 0;
     for dropdown in TOOLBOX_DROPDOWNS.iter() {
         let name = dropdown.name();
         let elements = dropdown.create_compound(app.upgrade_ref(), row);
+        col = 0;
         for element in elements.iter() {
-            app.add_element(&format!("{}_{}", name, col), element.to_owned());
+            let name = format!("{}_{}", name, col);
+            app.add_element(&name, element.to_owned());
             col += 1;
         }
         row += 1;
     }
 
     let region = get_toolbox_panel_region();
-    clear_region(app, &region);
+    clear_region(app, &region, false);
 }
 
 /// Handle hiding the toolbox.
 fn on_hide(app: &mut ApplicationContext<'_>) {
     // Remove the toolbox and it's items
-    let region: mxcfb_rect = ToolboxItem::Panel.remove(app.upgrade_ref());
     ToolboxItem::Logo.remove(app);
     for set in TOOLBOX_BUTTONS.iter().rev() {
         for item in set.iter().rev() {
@@ -96,8 +96,11 @@ fn on_hide(app: &mut ApplicationContext<'_>) {
     for dropdown in TOOLBOX_DROPDOWNS.iter() {
         let name = dropdown.name();
         for i in 0..DROPDOWN_ELEMENT_COUNT {
-            app.remove_element(&format!("{}_{}", name, i));
+            let name = format!("{}_{}", name, i);
+            app.remove_element(&name);
         }
     }
-    clear_region(app, &region);
+    ToolboxItem::Panel.remove(app.upgrade_ref());
+    let region = get_toolbox_panel_region();
+    clear_region(app, &region, true);
 }

@@ -1,7 +1,22 @@
 use crate::{
     draw_mode::DrawMode, touch_mode::TouchMode, UIConstraintRefresh, UIElement, UIElementWrapper,
+    WACOM_HISTORY,
 };
+use cgmath::Point2;
 use libremarkable::{appctx, framebuffer::common::*};
+
+use once_cell::sync::Lazy;
+use std::sync::Mutex;
+
+struct CanvasEntry {
+    startpt: (Point2<f32>, f32),
+    ctrlpt: (Point2<f32>, f32),
+    endpt: (Point2<f32>, f32),
+    samples: i32,
+    v: color,
+}
+
+static CANVAS_HISTORY: Lazy<Mutex<Vec<CanvasEntry>>> = Lazy::new(|| Mutex::new(Vec::new()));
 
 // This region will have the following size at rest:
 //   raw: 5896 kB
@@ -28,20 +43,137 @@ pub fn create(_app: &mut appctx::ApplicationContext) -> UIElementWrapper {
 }
 
 pub mod event_handlers {
-    use super::CANVAS_REGION;
+    use super::{CanvasEntry, CANVAS_HISTORY, CANVAS_REGION};
     use crate::{
-        appctx, display_temp, dither_mode, image, image::GenericImage, waveform_mode, DrawMode,
-        FramebufferDraw, FramebufferRefresh, Lazy, Mutex, Ordering, PartialRefreshMode, UIElement,
-        UIElementHandle, G_DRAW_MODE,
+        appctx, display_temp, dither_mode, image,
+        image::GenericImage,
+        layout::{get_kebab_region, is_toolbox_open},
+        waveform_mode, DrawMode, FramebufferDraw, FramebufferRefresh, Lazy, Mutex, Ordering,
+        PartialRefreshMode, UIElement, UIElementHandle, DRAWING_QUANT_BIT, G_DRAW_MODE,
+        UNPRESS_OBSERVED, WACOM_HISTORY, WACOM_RUBBER_SIDE,
     };
+    use cgmath::{EuclideanSpace, Point2, Vector2};
     use libremarkable::{
         end_bench,
-        framebuffer::{storage, FramebufferIO},
+        framebuffer::{
+            common::{color, mxcfb_rect},
+            storage, FramebufferIO,
+        },
         start_bench,
     };
 
     static SAVED_CANVAS: Lazy<Mutex<Option<storage::CompressedCanvasState>>> =
         Lazy::new(|| Mutex::new(None));
+
+    pub fn handle_draw_event(
+        app: &mut appctx::ApplicationContext<'_>,
+        position: Point2<f32>,
+        pressure: u16,
+        tilt: Vector2<u16>,
+    ) {
+        let mut wacom_stack = WACOM_HISTORY.lock().unwrap();
+
+        // This is so that we can click the buttons outside the canvas region
+        // normally meant to be touched with a finger using our stylus
+        if !CANVAS_REGION.contains_point(&position.cast().unwrap())
+            || is_toolbox_open()
+            || get_kebab_region().contains_point(&position.cast().unwrap())
+        {
+            wacom_stack.clear();
+            if UNPRESS_OBSERVED.fetch_and(false, Ordering::Relaxed) {
+                let region =
+                    app.find_active_region(position.y.round() as u16, position.x.round() as u16);
+                let element = region.map(|(region, _)| region.element.clone());
+                if let Some(element) = element {
+                    (region.unwrap().0.handler)(app, element)
+                }
+            }
+            return;
+        }
+
+        let (mut col, mut mult) = match G_DRAW_MODE.load(Ordering::Relaxed) {
+            DrawMode::Draw(s) => (color::BLACK, s),
+            DrawMode::Erase(s) => (color::WHITE, s * 3),
+        };
+        if WACOM_RUBBER_SIDE.load(Ordering::Relaxed) {
+            col = match col {
+                color::WHITE => color::BLACK,
+                _ => color::WHITE,
+            };
+            mult = 50; // Rough size of the rubber end
+        }
+
+        wacom_stack.push_back((position.cast().unwrap(), pressure as i32));
+
+        while wacom_stack.len() >= 3 {
+            let framebuffer = app.get_framebuffer_ref();
+            let points = vec![
+                wacom_stack.pop_front().unwrap(),
+                *wacom_stack.get(0).unwrap(),
+                *wacom_stack.get(1).unwrap(),
+            ];
+            let radii: Vec<f32> = points
+                .iter()
+                .map(|point| ((mult as f32 * (point.1 as f32) / 2048.) / 2.0))
+                .collect();
+            // calculate control points
+            let start_point = points[2].0.midpoint(points[1].0);
+            let ctrl_point = points[1].0;
+            let end_point = points[1].0.midpoint(points[0].0);
+            // calculate diameters
+            let start_width = radii[2] + radii[1];
+            let ctrl_width = radii[1] * 2.0;
+            let end_width = radii[1] + radii[0];
+            let rect = framebuffer.draw_dynamic_bezier(
+                (start_point, start_width),
+                (ctrl_point, ctrl_width),
+                (end_point, end_width),
+                10,
+                col,
+            );
+
+            CANVAS_HISTORY.lock().unwrap().push(CanvasEntry {
+                startpt: (start_point, start_width),
+                ctrlpt: (ctrl_point, ctrl_width),
+                endpt: (end_point, end_width),
+                samples: 10,
+                v: col,
+            });
+
+            framebuffer.partial_refresh(
+                &rect,
+                PartialRefreshMode::Async,
+                waveform_mode::WAVEFORM_MODE_DU,
+                display_temp::TEMP_USE_REMARKABLE_DRAW,
+                dither_mode::EPDC_FLAG_EXP1,
+                DRAWING_QUANT_BIT,
+                false,
+            );
+        }
+    }
+
+    pub fn draw_from_history(app: &mut appctx::ApplicationContext<'_>) {
+        let framebuffer = app.get_framebuffer_ref();
+        for entry in CANVAS_HISTORY.lock().unwrap().iter() {
+            let nc = entry.v.as_native();
+            let rect = framebuffer.draw_dynamic_bezier(
+                entry.startpt,
+                entry.ctrlpt,
+                entry.endpt,
+                entry.samples,
+                entry.v,
+            );
+            framebuffer.partial_refresh(
+                &rect,
+                PartialRefreshMode::Async,
+                waveform_mode::WAVEFORM_MODE_DU,
+                display_temp::TEMP_USE_REMARKABLE_DRAW,
+                dither_mode::EPDC_FLAG_EXP1,
+                DRAWING_QUANT_BIT,
+                false,
+            );
+        }
+    }
 
     pub fn on_save_canvas(app: &mut appctx::ApplicationContext<'_>, _element: UIElementHandle) {
         start_bench!(stopwatch, save_canvas);

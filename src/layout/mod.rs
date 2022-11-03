@@ -50,7 +50,7 @@ pub fn init(app: &mut ApplicationContext) {
     root.add_element(&AppElement::Kebab.name(), AppElement::Kebab.create(app));
 }
 
-pub fn clear_region(app: &mut ApplicationContext, region: &mxcfb_rect) {
+pub fn clear_region(app: &mut ApplicationContext, region: &mxcfb_rect, with_history: bool) {
     let fb = app.get_framebuffer_ref();
     let final_region = mxcfb_rect {
         top: std::cmp::max((region.top as i32) - 5, 0 as i32) as u32,
@@ -79,4 +79,7 @@ pub fn clear_region(app: &mut ApplicationContext, region: &mxcfb_rect) {
         false,
     );
     app.draw_elements();
+    if with_history {
+        canvas_handlers::draw_from_history(app.upgrade_ref());
+    }
 }
