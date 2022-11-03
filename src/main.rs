@@ -2,21 +2,16 @@ mod draw_mode;
 mod layout;
 mod touch_mode;
 
-use crate::layout::{
-    canvas_handlers::handle_draw_event, get_kebab_region, is_toolbox_open, CANVAS_REGION,
-};
+use crate::layout::{canvas_handlers::handle_draw_event, CANVAS_REGION};
 use draw_mode::DrawMode;
 use libremarkable::{
     appctx,
-    framebuffer::{
-        cgmath, cgmath::EuclideanSpace, common::*, FramebufferDraw, FramebufferRefresh,
-        PartialRefreshMode,
-    },
+    framebuffer::{cgmath, common::*, FramebufferDraw, FramebufferRefresh, PartialRefreshMode},
     image, input,
     input::InputEvent,
     ui_extensions::element::{UIConstraintRefresh, UIElement, UIElementHandle, UIElementWrapper},
 };
-use touch_mode::TouchMode;
+/* use touch_mode::TouchMode; */
 
 #[cfg(feature = "enable-runtime-benchmarking")]
 use libremarkable::stopwatch;
@@ -39,7 +34,7 @@ const APP_BUTTON_SPACE_V: u16 = APP_BUTTON_WIDTH + (APP_BUTTON_GAP_V * 2);
 const DISPLAY_EDGE_TOP: u16 = 0;
 const DISPLAY_EDGE_RIGHT: u16 = DISPLAYWIDTH;
 
-static G_TOUCH_MODE: Lazy<Atomic<TouchMode>> = Lazy::new(|| Atomic::new(TouchMode::OnlyUI));
+/* static G_TOUCH_MODE: Lazy<Atomic<TouchMode>> = Lazy::new(|| Atomic::new(TouchMode::OnlyUI)); */
 static G_DRAW_MODE: Lazy<Atomic<DrawMode>> = Lazy::new(|| Atomic::new(DrawMode::Draw(2)));
 static UNPRESS_OBSERVED: Lazy<AtomicBool> = Lazy::new(|| AtomicBool::new(false));
 static WACOM_IN_RANGE: Lazy<AtomicBool> = Lazy::new(|| AtomicBool::new(false));
@@ -98,14 +93,14 @@ fn on_wacom_input(app: &mut appctx::ApplicationContext<'_>, input: input::WacomE
     };
 }
 
-fn on_touch_handler(app: &mut appctx::ApplicationContext<'_>, input: input::MultitouchEvent) {
-    let framebuffer = app.get_framebuffer_ref();
+fn on_touch_handler(_app: &mut appctx::ApplicationContext<'_>, input: input::MultitouchEvent) {
+    /* let framebuffer = app.get_framebuffer_ref(); */
     match input {
         input::MultitouchEvent::Press { finger } | input::MultitouchEvent::Move { finger } => {
             if !CANVAS_REGION.contains_point(&finger.pos.cast().unwrap()) {
                 return;
             }
-            let rect = match G_TOUCH_MODE.load(Ordering::Relaxed) {
+            /* let rect = match G_TOUCH_MODE.load(Ordering::Relaxed) {
                 TouchMode::Bezier => {
                     let position_float = finger.pos.cast().unwrap();
                     let points = vec![
@@ -145,8 +140,8 @@ fn on_touch_handler(app: &mut appctx::ApplicationContext<'_>, input: input::Mult
                             position_int + cgmath::vec2(0, -20),
                         ],
                         match m {
-                            TouchMode::Diamonds => false,
-                            TouchMode::FillDiamonds => true,
+                            /* TouchMode::Diamonds => false,
+                            TouchMode::FillDiamonds => true, */
                             _ => false,
                         },
                         color::BLACK,
@@ -162,7 +157,7 @@ fn on_touch_handler(app: &mut appctx::ApplicationContext<'_>, input: input::Mult
                 dither_mode::EPDC_FLAG_USE_DITHERING_ALPHA,
                 DRAWING_QUANT_BIT,
                 false,
-            );
+            ); */
         }
         _ => {}
     }

@@ -9,8 +9,8 @@ pub const DROPDOWN_ELEMENT_COUNT: u16 = 2;
 
 /// Creates a toolbox button in the toolbox's rows and columns system.
 pub fn create_toolbox_dropdown(
-    inner: UIElement,
-    onclick: Option<fn(&mut ApplicationContext, UIElementHandle)>,
+    _inner: UIElement,
+    _onclick: Option<fn(&mut ApplicationContext, UIElementHandle)>,
     row: u16,
 ) -> Vec<UIElementWrapper> {
     let box_height: u16 = 32;

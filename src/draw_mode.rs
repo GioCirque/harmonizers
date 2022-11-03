@@ -1,10 +1,10 @@
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum DrawMode {
     Draw(u32),
-    Erase(u32),
+    /* Erase(u32), */
 }
 impl DrawMode {
-    pub fn set_size(self, new_size: u32) -> Self {
+    /*     pub fn set_size(self, new_size: u32) -> Self {
         match self {
             DrawMode::Draw(_) => DrawMode::Draw(new_size),
             DrawMode::Erase(_) => DrawMode::Erase(new_size),
@@ -22,7 +22,7 @@ impl DrawMode {
             DrawMode::Draw(s) => s,
             DrawMode::Erase(s) => s,
         }
-    }
+    } */
 }
 
 impl std::fmt::Display for DrawMode {

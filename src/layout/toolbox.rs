@@ -1,5 +1,5 @@
 use super::{toolbox_dropdown::DROPDOWN_ELEMENT_COUNT, toolbox_panel::get_toolbox_panel_region, *};
-use libremarkable::{appctx::ApplicationContext, framebuffer::common::mxcfb_rect};
+use libremarkable::{appctx::ApplicationContext};
 
 static TOOLBOX_OPEN: Lazy<AtomicBool> = Lazy::new(|| AtomicBool::new(false));
 static TOOLBOX_BUTTONS: [[ToolboxItem; 5]; 2] = [

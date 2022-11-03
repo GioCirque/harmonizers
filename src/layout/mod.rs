@@ -21,7 +21,7 @@ use libremarkable::appctx::ApplicationContext;
 /// Top-level application elements only
 #[derive(Debug, Clone, Copy)]
 enum AppElement {
-    Canvas,
+    /* Canvas, */
     Kebab,
 }
 
@@ -32,7 +32,7 @@ impl AppElement {
 
     fn create(self, app: &mut ApplicationContext) -> UIElementWrapper {
         match self {
-            AppElement::Canvas => canvas::create(app),
+            /* AppElement::Canvas => canvas::create(app), */
             AppElement::Kebab => kebab::create(app),
         }
     }

@@ -1,9 +1,5 @@
-use crate::{
-    draw_mode::DrawMode, touch_mode::TouchMode, UIConstraintRefresh, UIElement, UIElementWrapper,
-    WACOM_HISTORY,
-};
 use cgmath::Point2;
-use libremarkable::{appctx, framebuffer::common::*};
+use libremarkable::framebuffer::common::*;
 
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
@@ -28,7 +24,7 @@ pub const CANVAS_REGION: mxcfb_rect = mxcfb_rect {
     width: DISPLAYWIDTH as u32,
 };
 
-pub fn create(_app: &mut appctx::ApplicationContext) -> UIElementWrapper {
+/* pub fn create(_app: &mut appctx::ApplicationContext) -> UIElementWrapper {
     UIElementWrapper {
         position: CANVAS_REGION.top_left().cast().unwrap() + cgmath::vec2(0, -2),
         refresh: UIConstraintRefresh::RefreshAndWait,
@@ -40,36 +36,27 @@ pub fn create(_app: &mut appctx::ApplicationContext) -> UIElementWrapper {
         },
         ..Default::default()
     }
-}
+} */
 
 pub mod event_handlers {
     use super::{CanvasEntry, CANVAS_HISTORY, CANVAS_REGION};
     use crate::{
-        appctx, display_temp, dither_mode, image,
-        image::GenericImage,
+        appctx, display_temp, dither_mode,
         layout::{get_kebab_region, is_toolbox_open},
-        waveform_mode, DrawMode, FramebufferDraw, FramebufferRefresh, Lazy, Mutex, Ordering,
-        PartialRefreshMode, UIElement, UIElementHandle, DRAWING_QUANT_BIT, G_DRAW_MODE,
-        UNPRESS_OBSERVED, WACOM_HISTORY, WACOM_RUBBER_SIDE,
+        waveform_mode, DrawMode, FramebufferDraw, FramebufferRefresh, Ordering, PartialRefreshMode,
+        DRAWING_QUANT_BIT, G_DRAW_MODE, UNPRESS_OBSERVED, WACOM_HISTORY, WACOM_RUBBER_SIDE,
     };
     use cgmath::{EuclideanSpace, Point2, Vector2};
-    use libremarkable::{
-        end_bench,
-        framebuffer::{
-            common::{color, mxcfb_rect},
-            storage, FramebufferIO,
-        },
-        start_bench,
-    };
+    use libremarkable::framebuffer::common::color;
 
-    static SAVED_CANVAS: Lazy<Mutex<Option<storage::CompressedCanvasState>>> =
-        Lazy::new(|| Mutex::new(None));
+    /* static SAVED_CANVAS: Lazy<Mutex<Option<storage::CompressedCanvasState>>> =
+    Lazy::new(|| Mutex::new(None)); */
 
     pub fn handle_draw_event(
         app: &mut appctx::ApplicationContext<'_>,
         position: Point2<f32>,
         pressure: u16,
-        tilt: Vector2<u16>,
+        _tilt: Vector2<u16>,
     ) {
         let mut wacom_stack = WACOM_HISTORY.lock().unwrap();
 
@@ -93,7 +80,7 @@ pub mod event_handlers {
 
         let (mut col, mut mult) = match G_DRAW_MODE.load(Ordering::Relaxed) {
             DrawMode::Draw(s) => (color::BLACK, s),
-            DrawMode::Erase(s) => (color::WHITE, s * 3),
+            /* DrawMode::Erase(s) => (color::WHITE, s * 3), */
         };
         if WACOM_RUBBER_SIDE.load(Ordering::Relaxed) {
             col = match col {
@@ -155,7 +142,6 @@ pub mod event_handlers {
     pub fn draw_from_history(app: &mut appctx::ApplicationContext<'_>) {
         let framebuffer = app.get_framebuffer_ref();
         for entry in CANVAS_HISTORY.lock().unwrap().iter() {
-            let nc = entry.v.as_native();
             let rect = framebuffer.draw_dynamic_bezier(
                 entry.startpt,
                 entry.ctrlpt,
@@ -175,7 +161,7 @@ pub mod event_handlers {
         }
     }
 
-    pub fn on_save_canvas(app: &mut appctx::ApplicationContext<'_>, _element: UIElementHandle) {
+    /*     pub fn on_save_canvas(app: &mut appctx::ApplicationContext<'_>, _element: UIElementHandle) {
         start_bench!(stopwatch, save_canvas);
         let framebuffer = app.get_framebuffer_ref();
         match framebuffer.dump_region(CANVAS_REGION) {
@@ -344,5 +330,5 @@ pub mod event_handlers {
             *text = name;
         }
         app.draw_element("colorIndicator");
-    }
+    } */
 }

@@ -1,4 +1,4 @@
-use std::fmt;
+/* use std::fmt;
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum TouchMode {
@@ -14,3 +14,4 @@ impl fmt::Display for TouchMode {
         write!(f, "{:?}", self)
     }
 }
+ */

@@ -79,7 +79,7 @@ impl ToolboxItem {
     /// Create the associated `Vec<UIElementWrapper>` for a compound element.
     pub fn create_compound(
         self,
-        app: &mut appctx::ApplicationContext,
+        _app: &mut appctx::ApplicationContext,
         row: u16,
     ) -> Vec<UIElementWrapper> {
         match self {
